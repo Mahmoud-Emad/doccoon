@@ -22,7 +22,8 @@
               <path d="M10 2V4M10 16V18M18 10H16M4 10H2M15.5 4.5L14 6M6 14L4.5 15.5M15.5 15.5L14 14M6 6L4.5 4.5"
                 stroke="currentColor" stroke-width="2" stroke-linecap="round" />
             </svg>
-            <svg v-else width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <svg v-else width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"
+              style="transform: rotate(-25deg);">
               <path
                 d="M17 10.5C16.1 13.5 13.4 15.5 10.5 15.5C6.9 15.5 4 12.6 4 9C4 6.1 6 3.4 9 2.5C5.9 3.4 3.5 6.4 3.5 10C3.5 14.1 6.9 17.5 11 17.5C14.6 17.5 17.6 15.1 18.5 12C18.2 11.2 17.7 10.8 17 10.5Z"
                 fill="currentColor" />
@@ -160,6 +161,78 @@
           <a href="https://github.com/mermaid-js/mermaid" target="_blank" rel="noopener noreferrer"
             class="see-more-link">
             See more diagram types
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M6 3L11 8L6 13" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round" />
+            </svg>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Code Syntax Highlighting Section -->
+    <div class="code-section">
+      <div class="code-content">
+        <h2 class="section-title">Beautiful Code Blocks</h2>
+        <p class="section-description">
+          Syntax highlighting for 100+ programming languages with automatic language detection.
+          Write clean, readable code examples with beautiful color schemes.
+        </p>
+
+        <div class="code-examples">
+          <div class="code-example" data-index="0">
+            <div class="code-header">
+              <h3>TypeScript</h3>
+              <div class="code-actions">
+                <button class="action-btn copy-btn" @click="copyCodeExample(0)" title="Copy code">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="5" y="5" width="9" height="9" rx="1" stroke="currentColor" stroke-width="1.5"
+                      fill="none" />
+                    <path d="M3 11V3C3 2.4 3.4 2 4 2H10" stroke="currentColor" stroke-width="1.5" fill="none" />
+                  </svg>
+                  <span v-if="copiedCodeIndex === 0" class="copy-tooltip">Copied!</span>
+                </button>
+                <button class="action-btn try-btn" @click="tryCodeExample(0)" title="Try it">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M5 3L11 8L5 13V3Z" fill="currentColor" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div class="code-preview">
+              <pre><code class="language-typescript" v-html="highlightedCode[0]"></code></pre>
+            </div>
+          </div>
+
+          <div class="code-example" data-index="1">
+            <div class="code-header">
+              <h3>Python</h3>
+              <div class="code-actions">
+                <button class="action-btn copy-btn" @click="copyCodeExample(1)" title="Copy code">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="5" y="5" width="9" height="9" rx="1" stroke="currentColor" stroke-width="1.5"
+                      fill="none" />
+                    <path d="M3 11V3C3 2.4 3.4 2 4 2H10" stroke="currentColor" stroke-width="1.5" fill="none" />
+                  </svg>
+                  <span v-if="copiedCodeIndex === 1" class="copy-tooltip">Copied!</span>
+                </button>
+                <button class="action-btn try-btn" @click="tryCodeExample(1)" title="Try it">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M5 3L11 8L5 13V3Z" fill="currentColor" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div class="code-preview">
+              <pre><code class="language-python" v-html="highlightedCode[1]"></code></pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="code-footer">
+          <a href="https://highlightjs.org/static/demo/" target="_blank" rel="noopener noreferrer"
+            class="see-more-link">
+            See all supported languages
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M6 3L11 8L6 13" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                 stroke-linejoin="round" />
@@ -539,12 +612,13 @@ Binomial theorem: $\binom{n}{k} = \frac{n!}{k!(n-k)!}$</pre>
 </template>
 
 <script setup lang="ts">
-import { onMounted, watch, ref } from 'vue';
+import { onMounted, watch, ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useTheme } from '@/composables/useTheme';
 import mermaid from 'mermaid';
 import { marked } from 'marked';
 import katex from 'katex';
+import hljs from 'highlight.js';
 
 const router = useRouter();
 const { isDarkTheme, toggleTheme } = useTheme();
@@ -552,6 +626,49 @@ const { isDarkTheme, toggleTheme } = useTheme();
 // Track which copy button is showing tooltip
 const copiedIndex = ref<number | null>(null);
 const copiedMathIndex = ref<number | null>(null);
+const copiedCodeIndex = ref<number | null>(null);
+
+// Store code examples
+const codeExamples = [
+  `interface Book {
+  title: string;
+  author: string;
+  pages: number;
+}
+
+function createBook(title: string, author: string): Book {
+  return {
+    title,
+    author,
+    pages: 0
+  };
+}`,
+  `class Book:
+    def __init__(self, title: str, author: str):
+        self.title = title
+        self.author = author
+        self.pages = 0
+
+    def add_chapter(self, name: str, pages: int):
+        self.pages += pages
+        print(f"Added chapter: {name}")
+    
+    def remove_chapter(self, name: str):
+        self.pages -= pages
+        print(f"Removed chapter: {name}")`
+];
+
+// Compute highlighted code
+const highlightedCode = computed(() => {
+  return codeExamples.map((code, index) => {
+    const language = index === 0 ? 'typescript' : 'python';
+    try {
+      return hljs.highlight(code, { language }).value;
+    } catch (e) {
+      return hljs.highlightAuto(code).value;
+    }
+  });
+});
 
 // Store mermaid code for each example
 const mermaidCodes = [
@@ -612,6 +729,54 @@ function tryMermaidCode(index: number) {
     spreads: [
       {
         left: `# Mermaid Example\n\n\`\`\`mermaid\n${code}\n\`\`\``,
+        right: '',
+        leftWidth: '1',
+        rightWidth: '1'
+      }
+    ]
+  };
+
+  // Encode the book data as base64 to pass in URL
+  const bookData = btoa(encodeURIComponent(JSON.stringify(newBook)));
+
+  // Open in new tab with the example data
+  const url = `${window.location.origin}/view?example=${bookData}`;
+  window.open(url, '_blank');
+}
+
+// Copy code example to clipboard
+async function copyCodeExample(index: number) {
+  const code = codeExamples[index];
+  if (!code) return;
+
+  try {
+    await navigator.clipboard.writeText(code);
+
+    // Show tooltip
+    copiedCodeIndex.value = index;
+
+    // Hide tooltip after 2 seconds
+    setTimeout(() => {
+      copiedCodeIndex.value = null;
+    }, 2000);
+  } catch (err) {
+    console.error('Failed to copy code:', err);
+  }
+}
+
+// Try code example - open in new tab
+function tryCodeExample(index: number) {
+  const code = codeExamples[index];
+  if (!code) return;
+
+  const language = index === 0 ? 'typescript' : 'python';
+
+  // Create a new book with the code example
+  const newBook = {
+    filename: `${language}-example`,
+    spreads: [
+      {
+        left: `# ${language.charAt(0).toUpperCase() + language.slice(1)} Example\n\n\`\`\`${language}\n${code}\n\`\`\``,
         right: '',
         leftWidth: '1',
         rightWidth: '1'
@@ -1343,6 +1508,85 @@ body.dark-theme .mermaid-example:hover {
   transform: translateX(2px);
 }
 
+/* Code Syntax Highlighting Section */
+.code-section {
+  padding: 80px 32px;
+  background: var(--bg-color);
+  border-top: 1px solid var(--border-color);
+}
+
+.code-content {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.code-examples {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 24px;
+}
+
+.code-example {
+  background: var(--page-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 20px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.code-example:hover {
+  border-color: rgba(0, 122, 204, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+body.dark-theme .code-example:hover {
+  box-shadow: 0 2px 8px rgba(0, 122, 204, 0.1);
+}
+
+.code-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.code-example h3 {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--text-color);
+}
+
+.code-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.code-preview {
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.code-preview pre {
+  margin: 0;
+  padding: 16px;
+  overflow-x: auto;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.code-preview code {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
+  display: block;
+}
+
+.code-footer {
+  margin-top: 32px;
+  text-align: center;
+}
+
 /* Diff Checker Section */
 .diff-section {
   padding: 80px 32px;
@@ -1884,6 +2128,14 @@ body.dark-theme .feature-card:hover {
     font-size: 11px;
   }
 
+  .code-section {
+    padding: 60px 20px;
+  }
+
+  .code-examples {
+    grid-template-columns: 1fr;
+  }
+
   .features-title {
     font-size: 24px;
   }
@@ -1922,5 +2174,75 @@ body.dark-theme .feature-card:hover {
   .footer-description {
     max-width: 100%;
   }
+}
+</style>
+
+<style>
+/* Import highlight.js theme */
+@import 'highlight.js/styles/github.css';
+
+/* Dark theme for highlight.js */
+body.dark-theme .code-preview {
+  background: #0d1117;
+}
+
+body.dark-theme .hljs {
+  background: #0d1117;
+  color: #c9d1d9;
+}
+
+body.dark-theme .hljs-keyword,
+body.dark-theme .hljs-selector-tag,
+body.dark-theme .hljs-literal,
+body.dark-theme .hljs-section,
+body.dark-theme .hljs-link {
+  color: #ff7b72;
+}
+
+body.dark-theme .hljs-function .hljs-keyword {
+  color: #d2a8ff;
+}
+
+body.dark-theme .hljs-subst {
+  color: #c9d1d9;
+}
+
+body.dark-theme .hljs-string,
+body.dark-theme .hljs-title,
+body.dark-theme .hljs-name,
+body.dark-theme .hljs-type,
+body.dark-theme .hljs-attribute,
+body.dark-theme .hljs-symbol,
+body.dark-theme .hljs-bullet,
+body.dark-theme .hljs-addition,
+body.dark-theme .hljs-variable,
+body.dark-theme .hljs-template-tag,
+body.dark-theme .hljs-template-variable {
+  color: #a5d6ff;
+}
+
+body.dark-theme .hljs-comment,
+body.dark-theme .hljs-quote,
+body.dark-theme .hljs-deletion,
+body.dark-theme .hljs-meta {
+  color: #8b949e;
+}
+
+body.dark-theme .hljs-doctag,
+body.dark-theme .hljs-strong {
+  font-weight: bold;
+}
+
+body.dark-theme .hljs-emphasis {
+  font-style: italic;
+}
+
+body.dark-theme .hljs-number {
+  color: #79c0ff;
+}
+
+body.dark-theme .hljs-built_in,
+body.dark-theme .hljs-class .hljs-title {
+  color: #ffa657;
 }
 </style>
