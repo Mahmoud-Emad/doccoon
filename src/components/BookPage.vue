@@ -11,6 +11,18 @@
         <!-- Copy tooltip -->
         <div v-if="showCopyTooltip" class="action-tooltip">Copied!</div>
       </button>
+      <button class="page-action-btn" @click="triggerImageUpload" :title="`Insert image into ${side} page`">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+          <circle cx="8.5" cy="8.5" r="1.5"></circle>
+          <polyline points="21 15 16 10 5 21"></polyline>
+        </svg>
+        Insert Image
+        <!-- Upload progress indicator -->
+        <div v-if="uploadProgress > 0 && uploadProgress < 100" class="upload-progress">
+          <div class="upload-progress-bar" :style="{ width: uploadProgress + '%' }"></div>
+        </div>
+      </button>
       <button class="page-action-btn" @click="clearContent" :title="`Clear ${side} page content`">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <polyline points="3 6 5 6 21 6"></polyline>
@@ -29,15 +41,19 @@
       </button>
     </div>
 
+    <!-- Hidden file input for image upload -->
+    <input ref="fileInputRef" type="file" accept="image/png,image/jpeg,image/jpg,image/gif,image/svg+xml,image/webp"
+      multiple style="display: none" @change="handleFileSelect" />
+
     <div class="page-content">
       <!-- Edit Mode: Textarea with Line Numbers -->
       <div v-if="!isViewMode" class="editor-container">
         <div ref="lineNumbersRef" class="line-numbers">
           <div v-for="n in lineCount" :key="n" class="line-number">{{ n }}</div>
         </div>
-        <textarea ref="textareaRef" class="page-textarea" :class="{ 'drag-over': isDragging }" :value="content"
+        <textarea ref="textareaRef" class="page-textarea" :class="{ 'drag-over': isDragging }" :value="displayContent"
           :placeholder="`Start writing on the ${side} page...`" @input="onInput" @scroll="syncScroll"
-          @dragover="onDragOver" @dragleave="onDragLeave" @drop="onDrop"></textarea>
+          @dragover="onDragOver" @dragleave="onDragLeave" @drop="onDrop" @focus="onFocus" @blur="onBlur"></textarea>
       </div>
 
       <!-- View Mode: Rendered Markdown or Diff -->
@@ -49,6 +65,7 @@
 <script setup lang="ts">
 import { ref, watch, nextTick, computed } from 'vue';
 import { useDragDrop } from '@/composables/useDragDrop';
+import { useImage } from '@/composables/useImage';
 import { logger } from '@/utils/logger';
 
 const props = defineProps<{
@@ -73,13 +90,98 @@ const emit = defineEmits<{
 const textareaRef = ref<HTMLTextAreaElement>();
 const lineNumbersRef = ref<HTMLElement>();
 const viewRef = ref<HTMLElement>();
+const fileInputRef = ref<HTMLInputElement>();
 const showCopyTooltip = ref(false);
 
 const { isDragging, handleDragOver, handleDragLeave, handleDrop } = useDragDrop();
+const { processImage, generateImageMarkdown, uploadProgress } = useImage();
 
-// Calculate line count
+/**
+ * Shorten base64 image data URLs for display in editor
+ * Keeps first 40 chars and last 10 chars of base64 for reference
+ */
+function shortenBase64Images(content: string): string {
+  // Match both markdown images and HTML img tags with base64 data
+  return content.replace(
+    /(!?\[[^\]]*\]\(data:image\/[^;]+;base64,)([A-Za-z0-9+/=]{50,})(\))/g,
+    (_match, prefix, base64, suffix) => {
+      const start = base64.substring(0, 40);
+      const end = base64.substring(base64.length - 10);
+      return `${prefix}${start}...${end}${suffix}`;
+    }
+  ).replace(
+    /(<img[^>]+src=["']data:image\/[^;]+;base64,)([A-Za-z0-9+/=]{50,})(["'][^>]*>)/g,
+    (_match, prefix, base64, suffix) => {
+      const start = base64.substring(0, 40);
+      const end = base64.substring(base64.length - 10);
+      return `${prefix}${start}...${end}${suffix}`;
+    }
+  );
+}
+
+/**
+ * Restore full base64 data from shortened version
+ */
+function restoreBase64Images(shortenedContent: string, originalContent: string): string {
+  // Build a map of shortened -> full base64 strings
+  const base64Map = new Map<string, string>();
+
+  // Extract all full base64 images from original content
+  const fullRegex = /(!?\[[^\]]*\]\(data:image\/[^;]+;base64,)([A-Za-z0-9+/=]{50,})(\))/g;
+  let match;
+
+  while ((match = fullRegex.exec(originalContent)) !== null) {
+    const prefix = match[1];
+    const fullBase64 = match[2];
+    const suffix = match[3];
+
+    if (!fullBase64) continue;
+
+    // Create the shortened version key
+    const start = fullBase64.substring(0, 40);
+    const end = fullBase64.substring(fullBase64.length - 10);
+    const shortenedKey = `${prefix}${start}...${end}${suffix}`;
+    const fullValue = `${prefix}${fullBase64}${suffix}`;
+
+    base64Map.set(shortenedKey, fullValue);
+  }
+
+  // Also handle HTML img tags
+  const htmlRegex = /(<img[^>]+src=["']data:image\/[^;]+;base64,)([A-Za-z0-9+/=]{50,})(["'][^>]*>)/g;
+  while ((match = htmlRegex.exec(originalContent)) !== null) {
+    const prefix = match[1];
+    const fullBase64 = match[2];
+    const suffix = match[3];
+
+    if (!fullBase64) continue;
+
+    const start = fullBase64.substring(0, 40);
+    const end = fullBase64.substring(fullBase64.length - 10);
+    const shortenedKey = `${prefix}${start}...${end}${suffix}`;
+    const fullValue = `${prefix}${fullBase64}${suffix}`;
+
+    base64Map.set(shortenedKey, fullValue);
+  }
+
+  // Replace shortened versions with full versions
+  let restoredContent = shortenedContent;
+  for (const [shortened, full] of base64Map.entries()) {
+    restoredContent = restoredContent.replace(shortened, full);
+  }
+
+  return restoredContent;
+}
+
+/**
+ * Display content with shortened base64 images
+ */
+const displayContent = computed(() => {
+  return shortenBase64Images(props.content);
+});
+
+// Calculate line count based on display content
 const lineCount = computed(() => {
-  const lines = props.content.split('\n').length;
+  const lines = displayContent.value.split('\n').length;
   return Math.max(lines, 1); // At least 1 line
 });
 
@@ -88,6 +190,15 @@ function syncScroll() {
   if (textareaRef.value && lineNumbersRef.value) {
     lineNumbersRef.value.scrollTop = textareaRef.value.scrollTop;
   }
+}
+
+// Focus/blur handlers (kept for potential future use)
+function onFocus() {
+  // Currently not used, but available for future enhancements
+}
+
+function onBlur() {
+  // Currently not used, but available for future enhancements
 }
 
 // Action button handlers
@@ -117,9 +228,58 @@ function openInPageView() {
   }
 }
 
+// Image upload functions
+function triggerImageUpload() {
+  fileInputRef.value?.click();
+}
+
+async function handleFileSelect(e: Event) {
+  const target = e.target as HTMLInputElement;
+  const files = target.files;
+
+  if (!files || files.length === 0) return;
+
+  const cursorPos = textareaRef.value?.selectionStart || props.content.length;
+
+  for (const file of Array.from(files)) {
+    try {
+      const imageInfo = await processImage(file);
+      const markdown = generateImageMarkdown(imageInfo);
+      insertTextAtCursor(markdown, cursorPos);
+    } catch (error) {
+      logger.error('Failed to upload image:', error);
+      alert(`Failed to upload ${file.name}: ${(error as Error).message}`);
+    }
+  }
+
+  // Reset file input
+  target.value = '';
+}
+
+function insertTextAtCursor(text: string, cursorPos: number) {
+  const before = props.content.substring(0, cursorPos);
+  const after = props.content.substring(cursorPos);
+  const newContent = before + text + after;
+
+  emit('update:content', newContent);
+
+  nextTick(() => {
+    if (textareaRef.value) {
+      const newCursorPos = cursorPos + text.length;
+      textareaRef.value.selectionStart = textareaRef.value.selectionEnd = newCursorPos;
+      textareaRef.value.focus();
+    }
+  });
+}
+
 function onInput(e: Event) {
   const target = e.target as HTMLTextAreaElement;
-  emit('update:content', target.value);
+  const editedContent = target.value;
+
+  // Restore any shortened base64 images to their full versions
+  const restoredContent = restoreBase64Images(editedContent, props.content);
+
+  emit('update:content', restoredContent);
 }
 
 function onDragOver(e: DragEvent) {
@@ -144,6 +304,7 @@ function onDrop(e: DragEvent) {
 
     emit('update:content', newContent);
 
+    // Set cursor position after the inserted content
     nextTick(() => {
       if (textareaRef.value) {
         textareaRef.value.selectionStart = textareaRef.value.selectionEnd = pos + text.length;
@@ -323,6 +484,29 @@ watch(viewRef, async (newValue) => {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* Upload Progress Indicator */
+.upload-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: rgba(0, 122, 204, 0.1);
+  overflow: hidden;
+}
+
+.upload-progress-bar {
+  height: 100%;
+  background: #007ACC;
+  transition: width 0.3s ease;
+}
+
+/* Drag Over State */
+.page-textarea.drag-over {
+  border: 2px dashed #007ACC !important;
+  background: rgba(0, 122, 204, 0.05) !important;
 }
 
 /* Diff View Styles */

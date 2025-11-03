@@ -80,6 +80,15 @@
             {{ isDiffMode ? 'Hide Diff' : 'Show Diff' }}
           </button>
           <div class="dropdown-divider"></div>
+          <button class="dropdown-item" @click="handleShowImageGallery">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+              <circle cx="8.5" cy="8.5" r="1.5"></circle>
+              <polyline points="21 15 16 10 5 21"></polyline>
+            </svg>
+            Image Gallery
+          </button>
+          <div class="dropdown-divider"></div>
           <button class="dropdown-item" @click="handleToggleTheme">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
@@ -120,6 +129,7 @@ const emit = defineEmits<{
   'toggle-layout': [];
   'toggle-theme': [];
   'toggle-diff': [];
+  'show-image-gallery': [];
 }>();
 
 const activeDropdown = ref<string | null>(null);
@@ -173,6 +183,11 @@ function handleToggleDiff() {
 
 function handleToggleTheme() {
   emit('toggle-theme');
+  closeDropdown();
+}
+
+function handleShowImageGallery() {
+  emit('show-image-gallery');
   closeDropdown();
 }
 

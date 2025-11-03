@@ -6,7 +6,8 @@
     <EditorNavbar :filename="book.filename" :is-view-mode="isViewMode" :is-dark-theme="isDarkTheme"
       :layout-mode="layoutMode" :is-diff-mode="isDiffMode" @new="handleNewBook" @delete-book="handleDeleteBook"
       @add-page="addSpread" @delete-page="handleDeletePage" @toggle-view="handleToggleView"
-      @toggle-layout="handleToggleLayoutMode" @toggle-diff="toggleDiffMode" @toggle-theme="toggleTheme" />
+      @toggle-layout="handleToggleLayoutMode" @toggle-diff="toggleDiffMode" @toggle-theme="toggleTheme"
+      @show-image-gallery="showImageGallery" />
 
     <BookSpread :spread="displaySpread" :is-view-mode="isViewMode" :layout-mode="layoutMode" :is-diff-mode="isDiffMode"
       :left-diff-content="leftDiffContent" :right-diff-content="rightDiffContent" :render-markdown="renderMarkdown"
@@ -27,6 +28,9 @@
   <PageSelectionModal :visible="pageSelectionModalVisible" title="Select Page to View"
     message="Which page would you like to view in Page View mode?" @select-left="handleSelectLeftPage"
     @select-right="handleSelectRightPage" @cancel="handleCancelPageSelection" />
+
+  <ImageGallery :visible="imageGalleryVisible" :images="bookImages" @close="closeImageGallery"
+    @insert-image="handleInsertImage" />
 </template>
 
 <script setup lang="ts">
@@ -38,6 +42,7 @@ import BookSpread from '@/components/BookSpread.vue';
 import FooterControls from '@/components/Footer/FooterControls.vue';
 import Modal from '@/components/Modal.vue';
 import PageSelectionModal from '@/components/PageSelectionModal.vue';
+import ImageGallery from '@/components/ImageGallery.vue';
 
 import { useBook } from '@/composables/useBook';
 import { useTheme } from '@/composables/useTheme';
@@ -47,6 +52,9 @@ import { useStorage } from '@/composables/useStorage';
 import { useMarkdown } from '@/composables/useMarkdown';
 import { useModal } from '@/composables/useModal';
 import { useDiff } from '@/composables/useDiff';
+import { useBookImages } from '@/composables/useBookImages';
+import { useImage } from '@/composables/useImage';
+import type { ImageInfo } from '@/composables/useImage';
 import { logger } from '@/utils/logger';
 
 import type { Spread } from '@/types';
@@ -81,6 +89,8 @@ const { saveStatus, loadBook, deleteBook } = useStorage(book, isViewingExample);
 const { renderMarkdown } = useMarkdown(isDarkTheme);
 const { modalState, showModal, confirm, cancel } = useModal();
 const { isDiffMode, toggleDiffMode, computeDiff, renderDiffToHtml } = useDiff();
+const { getImagesSync } = useBookImages(book);
+const { generateImageMarkdown } = useImage();
 
 // Loading state
 const isLoading = ref(true);
@@ -90,6 +100,10 @@ const pageViewSide = ref<'left' | 'right'>('left');
 
 // Page selection modal state
 const pageSelectionModalVisible = ref(false);
+
+// Image gallery state
+const imageGalleryVisible = ref(false);
+const bookImages = computed(() => getImagesSync());
 
 // Computed spread to display based on layout mode and selected page
 const displaySpread = computed(() => {
@@ -243,6 +257,33 @@ async function handleDeleteBook() {
     deleteBook();
     createNewBook();
   }
+}
+
+// Image Gallery functions
+function showImageGallery() {
+  imageGalleryVisible.value = true;
+}
+
+function closeImageGallery() {
+  imageGalleryVisible.value = false;
+}
+
+function handleInsertImage(image: ImageInfo) {
+  // Insert image into the current page
+  const spread = currentSpread.value;
+  if (!spread) return;
+
+  const markdown = generateImageMarkdown(image);
+
+  // Insert at the end of the left page (or right page if in page view showing right)
+  if (layoutMode.value === 'page' && pageViewSide.value === 'right') {
+    spread.right += '\n\n' + markdown;
+  } else {
+    spread.left += '\n\n' + markdown;
+  }
+
+  updateCurrentSpread(spread);
+  closeImageGallery();
 }
 
 // Initialize app

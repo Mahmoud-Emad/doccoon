@@ -1,21 +1,24 @@
 import { ref } from 'vue';
+import { useImage } from './useImage';
+import { logger } from '@/utils/logger';
 
 export function useDragDrop() {
   const isDragging = ref(false);
-  
+  const { processImage, generateImageMarkdown } = useImage();
+
   function isImageUrl(url: string): boolean {
     const imageExtensions = /\.(jpg|jpeg|png|gif|bmp|svg|webp|ico)(\?.*)?$/i;
     if (imageExtensions.test(url)) return true;
-    
+
     const imageIndicators = [
       '/images/', '/img/', 'image', 'photo', 'picture',
       '.googleusercontent.com', 'imgur.com', 'flickr.com',
       'unsplash.com', 'pexels.com'
     ];
-    
+
     return imageIndicators.some(indicator => url.toLowerCase().includes(indicator));
   }
-  
+
   function getImageAltText(url: string): string {
     try {
       const urlObj = new URL(url);
@@ -27,7 +30,7 @@ export function useDragDrop() {
       return 'image';
     }
   }
-  
+
   function handleDragOver(e: DragEvent) {
     e.preventDefault();
     e.stopPropagation();
@@ -36,35 +39,41 @@ export function useDragDrop() {
     }
     isDragging.value = true;
   }
-  
+
   function handleDragLeave(e: DragEvent) {
     e.preventDefault();
     e.stopPropagation();
     isDragging.value = false;
   }
-  
+
   async function handleDrop(
-    e: DragEvent, 
+    e: DragEvent,
     onInsert: (text: string, cursorPos: number) => void,
     cursorPos: number
   ): Promise<void> {
     e.preventDefault();
     e.stopPropagation();
     isDragging.value = false;
-    
+
     const items = e.dataTransfer?.items;
     const files = e.dataTransfer?.files;
-    
+
     if (!items && !files) return;
-    
+
     // Handle files
     if (files && files.length > 0) {
       for (const file of Array.from(files)) {
         if (file.type.startsWith('image/')) {
-          const base64 = await fileToBase64(file);
-          const imageName = file.name.replace(/\.[^/.]+$/, '');
-          const markdown = `![${imageName}](${base64})`;
-          onInsert(markdown, cursorPos);
+          try {
+            // Process image with validation and compression
+            const imageInfo = await processImage(file);
+            const markdown = generateImageMarkdown(imageInfo);
+            onInsert(markdown, cursorPos);
+          } catch (error) {
+            logger.error('Failed to process dropped image:', error);
+            // Show error to user (could emit an event here)
+            alert(`Failed to upload image: ${(error as Error).message}`);
+          }
         } else {
           const markdown = `[${file.name}](file://${file.name})`;
           onInsert(markdown, cursorPos);
@@ -72,11 +81,11 @@ export function useDragDrop() {
       }
       return;
     }
-    
+
     // Handle URLs/HTML
     if (items) {
       let processed = false;
-      
+
       // First try to get HTML content (for image elements)
       for (const item of Array.from(items)) {
         if (item.kind === 'string' && item.type === 'text/html') {
@@ -94,7 +103,7 @@ export function useDragDrop() {
           break;
         }
       }
-      
+
       // If no HTML, try text/uri-list or text/plain
       if (!processed) {
         for (const item of Array.from(items)) {
@@ -113,13 +122,13 @@ export function useDragDrop() {
               text = text.trim();
               const urlPattern = /^(https?:\/\/|www\.)/i;
               let markdown = text;
-              
+
               if (urlPattern.test(text)) {
                 markdown = isImageUrl(text)
                   ? `![${getImageAltText(text)}](${text})`
                   : `[${text.split('/').pop() || text}](${text})`;
               }
-              
+
               onInsert(markdown, cursorPos);
             });
             processed = true;
@@ -129,7 +138,7 @@ export function useDragDrop() {
       }
     }
   }
-  
+
   function fileToBase64(file: File): Promise<string> {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -138,7 +147,7 @@ export function useDragDrop() {
       reader.readAsDataURL(file);
     });
   }
-  
+
   return {
     isDragging,
     handleDragOver,
