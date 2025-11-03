@@ -1,8 +1,28 @@
 import { ref, watch, type Ref } from 'vue';
 import type { Book } from '@/types';
+import { logger } from '@/utils/logger';
 
 const BOOK_DATA_KEY = 'openbook_data';
 const SAVE_DEBOUNCE_MS = 300;
+
+/**
+ * Validate that data conforms to Book interface
+ */
+function isValidBook(data: any): data is Book {
+  return (
+    data &&
+    typeof data === 'object' &&
+    typeof data.filename === 'string' &&
+    Array.isArray(data.spreads) &&
+    data.spreads.every((spread: any) =>
+      spread &&
+      typeof spread.left === 'string' &&
+      typeof spread.right === 'string' &&
+      typeof spread.leftWidth === 'string' &&
+      typeof spread.rightWidth === 'string'
+    )
+  );
+}
 
 export function useStorage(book: Ref<Book>, disableAutoSave?: Ref<boolean>) {
   const isSaving = ref(false);
@@ -14,7 +34,7 @@ export function useStorage(book: Ref<Book>, disableAutoSave?: Ref<boolean>) {
       localStorage.setItem(BOOK_DATA_KEY, JSON.stringify(book.value));
       return true;
     } catch (error) {
-      console.error('Failed to save book:', error);
+      logger.error('Failed to save book:', error);
       return false;
     }
   }
@@ -23,10 +43,18 @@ export function useStorage(book: Ref<Book>, disableAutoSave?: Ref<boolean>) {
     try {
       const saved = localStorage.getItem(BOOK_DATA_KEY);
       if (saved) {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        if (isValidBook(parsed)) {
+          return parsed;
+        } else {
+          logger.warn('Invalid book data in localStorage, clearing...');
+          localStorage.removeItem(BOOK_DATA_KEY);
+        }
       }
     } catch (error) {
-      console.error('Failed to load book:', error);
+      logger.error('Failed to load book:', error);
+      // Clear corrupted data
+      localStorage.removeItem(BOOK_DATA_KEY);
     }
     return null;
   }

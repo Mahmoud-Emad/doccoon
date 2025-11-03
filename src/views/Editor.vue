@@ -47,6 +47,7 @@ import { useStorage } from '@/composables/useStorage';
 import { useMarkdown } from '@/composables/useMarkdown';
 import { useModal } from '@/composables/useModal';
 import { useDiff } from '@/composables/useDiff';
+import { logger } from '@/utils/logger';
 
 import type { Spread } from '@/types';
 
@@ -74,7 +75,7 @@ const {
 } = useBook();
 
 const { isDarkTheme, toggleTheme } = useTheme();
-const { isViewMode, toggleViewMode, setViewMode } = useViewMode();
+const { isViewMode, setViewMode } = useViewMode();
 const { layoutMode, toggleLayoutMode, setLayoutMode } = useLayoutMode();
 const { saveStatus, loadBook, deleteBook } = useStorage(book, isViewingExample);
 const { renderMarkdown } = useMarkdown(isDarkTheme);
@@ -92,21 +93,31 @@ const pageSelectionModalVisible = ref(false);
 
 // Computed spread to display based on layout mode and selected page
 const displaySpread = computed(() => {
+  const spread = currentSpread.value;
+  if (!spread) {
+    return {
+      left: '',
+      right: '',
+      leftWidth: '50%',
+      rightWidth: '50%'
+    };
+  }
+
   if (layoutMode.value === 'page') {
     // In page view mode, show only the selected page
     if (pageViewSide.value === 'left') {
-      return currentSpread.value;
+      return spread;
     } else {
       // Show right page content in the left position
       return {
-        ...currentSpread.value,
-        left: currentSpread.value.right,
+        ...spread,
+        left: spread.right,
         right: ''
       };
     }
   }
   // In book view mode, show both pages normally
-  return currentSpread.value;
+  return spread;
 });
 
 // Computed diff content for left and right pages
@@ -114,7 +125,10 @@ const leftDiffContent = computed(() => {
   if (!isDiffMode.value || !isViewMode.value || layoutMode.value !== 'book') {
     return undefined;
   }
-  const diff = computeDiff(currentSpread.value.left, currentSpread.value.right);
+  const spread = currentSpread.value;
+  if (!spread) return undefined;
+
+  const diff = computeDiff(spread.left, spread.right);
   // Show removed lines on left (content in left but not in right)
   return renderDiffToHtml(diff.left);
 });
@@ -123,7 +137,10 @@ const rightDiffContent = computed(() => {
   if (!isDiffMode.value || !isViewMode.value || layoutMode.value !== 'book') {
     return undefined;
   }
-  const diff = computeDiff(currentSpread.value.left, currentSpread.value.right);
+  const spread = currentSpread.value;
+  if (!spread) return undefined;
+
+  const diff = computeDiff(spread.left, spread.right);
   // Show added lines on right (content in right but not in left)
   return renderDiffToHtml(diff.right);
 });
@@ -246,7 +263,7 @@ async function init() {
       isLoading.value = false;
       return;
     } catch (error) {
-      console.error('Failed to load example data:', error);
+      logger.error('Failed to load example data:', error);
       // Fall through to load saved book
     }
   }

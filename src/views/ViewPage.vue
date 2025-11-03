@@ -109,6 +109,8 @@ const pageContent = computed(() => {
   const isLeftPage = (currentPage.value - 1) % 2 === 0;
 
   const spread = book.value.spreads[spreadIndex];
+  if (!spread) return '';
+
   return isLeftPage ? spread.left : spread.right;
 });
 

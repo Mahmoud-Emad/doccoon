@@ -49,6 +49,7 @@
 <script setup lang="ts">
 import { ref, watch, nextTick, computed } from 'vue';
 import { useDragDrop } from '@/composables/useDragDrop';
+import { logger } from '@/utils/logger';
 
 const props = defineProps<{
   content: string;
@@ -98,7 +99,7 @@ async function copyContent() {
       showCopyTooltip.value = false;
     }, 2000);
   } catch (err) {
-    console.error('Failed to copy content:', err);
+    logger.error('Failed to copy content:', err);
   }
 }
 

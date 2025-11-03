@@ -29,9 +29,6 @@
                 fill="currentColor" />
             </svg>
           </button>
-
-          <!-- <a href="#" class="navbar-link">Sign In</a> -->
-          <!-- <a href="#" class="navbar-signup-btn">Sign Up</a> -->
         </div>
       </div>
     </nav>
@@ -615,6 +612,7 @@ Binomial theorem: $\binom{n}{k} = \frac{n!}{k!(n-k)!}$</pre>
 import { onMounted, watch, ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useTheme } from '@/composables/useTheme';
+import { logger } from '@/utils/logger';
 import mermaid from 'mermaid';
 import { marked } from 'marked';
 import katex from 'katex';
@@ -714,7 +712,7 @@ async function copyMermaidCode(index: number) {
       copiedIndex.value = null;
     }, 2000);
   } catch (err) {
-    console.error('Failed to copy code:', err);
+    logger.error('Failed to copy code:', err);
   }
 }
 
@@ -760,7 +758,7 @@ async function copyCodeExample(index: number) {
       copiedCodeIndex.value = null;
     }, 2000);
   } catch (err) {
-    console.error('Failed to copy code:', err);
+    logger.error('Failed to copy code:', err);
   }
 }
 
@@ -838,7 +836,7 @@ async function renderMermaidDiagrams() {
     mermaid.render(`mermaid-svg-${Date.now()}-${index}`, code).then(({ svg }) => {
       container.innerHTML = svg;
     }).catch((error) => {
-      console.error('Mermaid rendering error:', error);
+      logger.error('Mermaid rendering error:', error);
       // Fallback to showing code if rendering fails
       container.innerHTML = `<pre class="mermaid-code">${code}</pre>`;
     });
@@ -951,7 +949,7 @@ async function copyMathCode(index: number) {
       copiedMathIndex.value = null;
     }, 2000);
   } catch (err) {
-    console.error('Failed to copy code:', err);
+    logger.error('Failed to copy code:', err);
   }
 }
 
@@ -1022,14 +1020,14 @@ function renderMarkdownWithMath(markdown: string, targetElement: HTMLElement) {
   let mathIndex = 0;
 
   // Protect block math ($$...$$) - must come before inline math
-  let processedMarkdown = markdown.replace(/\$\$([\s\S]+?)\$\$/g, (match, content) => {
+  let processedMarkdown = markdown.replace(/\$\$([\s\S]+?)\$\$/g, (_match, content) => {
     const placeholder = `MATH_BLOCK_${mathIndex++}`;
     mathBlocks.push({ placeholder, content: content.trim(), display: true });
     return placeholder;
   });
 
   // Protect inline math ($...$)
-  processedMarkdown = processedMarkdown.replace(/\$([^\$\n]+?)\$/g, (match, content) => {
+  processedMarkdown = processedMarkdown.replace(/\$([^\$\n]+?)\$/g, (_match, content) => {
     const placeholder = `MATH_INLINE_${mathIndex++}`;
     mathBlocks.push({ placeholder, content: content.trim(), display: false });
     return placeholder;
@@ -1038,9 +1036,7 @@ function renderMarkdownWithMath(markdown: string, targetElement: HTMLElement) {
   // Configure marked
   marked.setOptions({
     gfm: true,
-    breaks: true,
-    headerIds: true,
-    mangle: false
+    breaks: true
   });
 
   // Render markdown
@@ -1093,13 +1089,13 @@ function renderMathPlaceholders(element: HTMLElement) {
         // Replace placeholder with rendered math
         placeholder.replaceWith(container);
       } catch (error) {
-        console.error('KaTeX rendering error:', error);
+        logger.error('KaTeX rendering error:', error);
         // Keep the placeholder if rendering fails
         placeholder.textContent = isDisplay ? `$$${mathContent}$$` : `$${mathContent}$`;
       }
     });
   } catch (error) {
-    console.error('Math placeholder processing error:', error);
+    logger.error('Math placeholder processing error:', error);
   }
 }
 

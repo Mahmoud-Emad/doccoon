@@ -1,9 +1,5 @@
 <template>
-  <div 
-    class="bookmark-separator" 
-    @mousedown="onMouseDown"
-    @touchstart="onTouchStart"
-  >
+  <div class="bookmark-separator" @mousedown="onMouseDown" @touchstart="onTouchStart">
     <div class="bookmark-ribbon"></div>
   </div>
 </template>
@@ -20,6 +16,7 @@ function onMouseDown(e: MouseEvent) {
 function onTouchStart(e: TouchEvent) {
   // Convert touch to mouse event
   const touch = e.touches[0];
+  if (!touch) return;
   const mouseEvent = new MouseEvent('mousedown', {
     clientX: touch.clientX,
     clientY: touch.clientY
@@ -31,4 +28,3 @@ function onTouchStart(e: TouchEvent) {
 <style scoped>
 /* Styles are in main.css */
 </style>
-

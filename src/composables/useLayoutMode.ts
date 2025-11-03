@@ -1,4 +1,5 @@
 import { ref, watch, onMounted } from 'vue';
+import { logger } from '@/utils/logger';
 
 const LAYOUT_MODE_KEY = 'openbook_layoutmode';
 
@@ -15,7 +16,7 @@ export function useLayoutMode() {
         layoutMode.value = saved;
       }
     } catch (error) {
-      console.error('Failed to load layout mode:', error);
+      logger.error('Failed to load layout mode:', error);
     }
   }
 
@@ -24,7 +25,7 @@ export function useLayoutMode() {
     try {
       localStorage.setItem(LAYOUT_MODE_KEY, layoutMode.value);
     } catch (error) {
-      console.error('Failed to save layout mode:', error);
+      logger.error('Failed to save layout mode:', error);
     }
   }
 

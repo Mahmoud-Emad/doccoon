@@ -15,9 +15,8 @@ export function useDiff() {
   }
 
   function computeDiff(leftContent: string, rightContent: string): { left: DiffLine[], right: DiffLine[] } {
-    const leftLines = leftContent.split('\n');
-    const rightLines = rightContent.split('\n');
-
+    // Note: leftLines and rightLines are not used in the current implementation
+    // as we use Diff.diffLines which handles the splitting internally
     const diff = Diff.diffLines(leftContent, rightContent);
 
     const leftResult: DiffLine[] = [];

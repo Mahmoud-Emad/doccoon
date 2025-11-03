@@ -4,10 +4,9 @@ import mermaid from 'mermaid';
 import hljs from 'highlight.js';
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
+import { logger } from '@/utils/logger';
 
 export function useMarkdown(isDarkTheme: Ref<boolean>) {
-
-  let mermaidInitialized = false;
 
   // Helper function to escape HTML
   function escapeHtml(text: string): string {
@@ -21,9 +20,8 @@ export function useMarkdown(isDarkTheme: Ref<boolean>) {
     mermaid.initialize({
       startOnLoad: false,
       theme: theme,
-      securityLevel: 'loose'
+      securityLevel: 'strict'  // Use strict security level for production
     });
-    mermaidInitialized = true;
   }
 
   function updateMermaidTheme() {
@@ -39,14 +37,14 @@ export function useMarkdown(isDarkTheme: Ref<boolean>) {
     let mathIndex = 0;
 
     // Protect block math ($$...$$) - must come before inline math
-    let processedMarkdown = markdown.replace(/\$\$([\s\S]+?)\$\$/g, (match, content) => {
+    let processedMarkdown = markdown.replace(/\$\$([\s\S]+?)\$\$/g, (_match, content) => {
       const placeholder = `MATH_BLOCK_${mathIndex++}`;
       mathBlocks.push({ placeholder, content: content.trim(), display: true });
       return placeholder;
     });
 
     // Protect inline math ($...$)
-    processedMarkdown = processedMarkdown.replace(/\$([^\$\n]+?)\$/g, (match, content) => {
+    processedMarkdown = processedMarkdown.replace(/\$([^\$\n]+?)\$/g, (_match, content) => {
       const placeholder = `MATH_INLINE_${mathIndex++}`;
       mathBlocks.push({ placeholder, content: content.trim(), display: false });
       return placeholder;
@@ -55,9 +53,7 @@ export function useMarkdown(isDarkTheme: Ref<boolean>) {
     // Configure marked
     marked.setOptions({
       gfm: true,
-      breaks: true,
-      headerIds: true,
-      mangle: false
+      breaks: true
     });
 
     // Render markdown
@@ -74,7 +70,9 @@ export function useMarkdown(isDarkTheme: Ref<boolean>) {
     let match;
 
     while ((match = mermaidRegex.exec(markdown)) !== null) {
-      mermaidBlocks.push(match[1]);
+      if (match[1]) {
+        mermaidBlocks.push(match[1]);
+      }
     }
 
     // Replace mermaid code blocks with placeholder divs
@@ -96,8 +94,11 @@ export function useMarkdown(isDarkTheme: Ref<boolean>) {
     // Render mermaid diagrams
     const mermaidDivs = targetElement.querySelectorAll('.mermaid-diagram');
     for (let i = 0; i < mermaidDivs.length && i < mermaidBlocks.length; i++) {
+      const mermaidCode = mermaidBlocks[i];
+      if (!mermaidCode) continue;
+
       try {
-        const { svg } = await mermaid.render(`mermaid-svg-${Date.now()}-${i}`, mermaidBlocks[i]);
+        const { svg } = await mermaid.render(`mermaid-svg-${Date.now()}-${i}`, mermaidCode);
         (mermaidDivs[i] as HTMLElement).innerHTML = svg;
       } catch (error) {
         (mermaidDivs[i] as HTMLElement).innerHTML = `<pre style="color: red;">Mermaid Error: ${(error as Error).message}</pre>`;
@@ -140,13 +141,13 @@ export function useMarkdown(isDarkTheme: Ref<boolean>) {
           // Replace placeholder with rendered math
           placeholder.replaceWith(container);
         } catch (error) {
-          console.error('KaTeX rendering error:', error);
+          logger.error('KaTeX rendering error:', error);
           // Keep the placeholder if rendering fails
           placeholder.textContent = isDisplay ? `$$${mathContent}$$` : `$${mathContent}$`;
         }
       });
     } catch (error) {
-      console.error('Math placeholder processing error:', error);
+      logger.error('Math placeholder processing error:', error);
     }
   }
 

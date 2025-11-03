@@ -49,7 +49,8 @@
 </template>
 
 <script setup lang="ts">
-const props = defineProps<{
+// Props are used in the template
+defineProps<{
   visible: boolean;
   title?: string;
   message?: string;
@@ -261,4 +262,3 @@ body.dark-theme .modal-container {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
 }
 </style>
-

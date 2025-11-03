@@ -39,7 +39,7 @@ const emit = defineEmits<{
   'toggle-layout': [];
 }>();
 
-const { isResizing, startResize: startResizeComposable, handleResize, stopResize } = useResize();
+const { startResize: startResizeComposable, handleResize, stopResize } = useResize();
 
 function updateLeft(content: string) {
   emit('update:spread', { left: content });

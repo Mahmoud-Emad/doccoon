@@ -102,7 +102,8 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
 
-const props = defineProps<{
+// Props are used in the template
+defineProps<{
   filename: string;
   isViewMode: boolean;
   isDarkTheme: boolean;
