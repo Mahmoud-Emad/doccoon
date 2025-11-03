@@ -17,7 +17,22 @@ A fully static front-end markdown-based book editor with a beautiful two-page sp
 
 ## Getting Started
 
-### Installation
+### Option 1: Docker (Recommended)
+
+```bash
+# Build and run with Docker Compose
+docker-compose up -d
+
+# Access the application at http://localhost:8080
+```
+
+To stop the container:
+
+```bash
+docker-compose down
+```
+
+### Option 2: Local Development
 
 ```bash
 # Install dependencies
@@ -28,6 +43,18 @@ npm run dev
 
 # Build for production
 npm run build
+```
+
+### Option 3: Docker without Compose
+
+```bash
+# Build the Docker image
+docker build -t openbook .
+
+# Run the container
+docker run -d -p 8080:80 --name openbook openbook
+
+# Access the application at http://localhost:8080
 ```
 
 ### Usage
