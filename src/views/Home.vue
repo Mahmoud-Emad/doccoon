@@ -300,6 +300,73 @@ Binomial theorem: $\binom{n}{k} = \frac{n!}{k!(n-k)!}$</pre>
       </div>
     </div>
 
+    <!-- Diff Checker Section -->
+    <div class="diff-section">
+      <div class="diff-content">
+        <h2 class="section-title">Side-by-Side Diff Checker</h2>
+        <p class="section-description">
+          Compare left and right pages in book view mode with visual diff highlighting.
+          Perfect for tracking changes, comparing versions, or reviewing edits.
+        </p>
+
+        <div class="diff-example">
+          <div class="diff-example-header">
+            <h3>Compare Two Versions</h3>
+            <p>See additions, deletions, and unchanged content at a glance</p>
+          </div>
+
+          <div class="diff-example-content">
+            <div class="diff-pane">
+              <div class="diff-pane-header">Left Page (Original)</div>
+              <div class="diff-pane-body">
+                <div class="diff-line diff-line-unchanged"><span class="diff-symbol">&nbsp;</span>- **Markdown Support**
+                </div>
+                <div class="diff-line diff-line-removed"><span class="diff-symbol">-</span>- **Mermaid Diagrams**</div>
+                <div class="diff-line diff-line-unchanged"><span class="diff-symbol">&nbsp;</span>- **Math Expressions**
+                </div>
+                <div class="diff-line diff-line-unchanged"><span class="diff-symbol">&nbsp;</span>- **Syntax
+                  Highlighting**</div>
+                <div class="diff-line diff-line-unchanged"><span class="diff-symbol">&nbsp;</span>- **Dark & Light
+                  Themes**</div>
+                <div class="diff-line diff-line-placeholder"><span class="diff-symbol">&nbsp;</span>&nbsp;</div>
+              </div>
+            </div>
+
+            <div class="diff-pane">
+              <div class="diff-pane-header">Right Page (Modified)</div>
+              <div class="diff-pane-body">
+                <div class="diff-line diff-line-unchanged"><span class="diff-symbol">&nbsp;</span>- **Markdown Support**
+                </div>
+                <div class="diff-line diff-line-placeholder"><span class="diff-symbol">&nbsp;</span>&nbsp;</div>
+                <div class="diff-line diff-line-unchanged"><span class="diff-symbol">&nbsp;</span>- **Math Expressions**
+                </div>
+                <div class="diff-line diff-line-unchanged"><span class="diff-symbol">&nbsp;</span>- **Syntax
+                  Highlighting**</div>
+                <div class="diff-line diff-line-unchanged"><span class="diff-symbol">&nbsp;</span>- **Dark & Light
+                  Themes**</div>
+                <div class="diff-line diff-line-added"><span class="diff-symbol">+</span>- **Diff Checker**</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="diff-legend">
+            <div class="diff-legend-item">
+              <span class="diff-legend-box diff-legend-added"></span>
+              <span>Added lines (green)</span>
+            </div>
+            <div class="diff-legend-item">
+              <span class="diff-legend-box diff-legend-removed"></span>
+              <span>Removed lines (red)</span>
+            </div>
+            <div class="diff-legend-item">
+              <span class="diff-legend-box diff-legend-placeholder"></span>
+              <span>Placeholder (gray)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Features Section -->
     <div class="features">
       <h2 class="features-title">Features</h2>
@@ -398,12 +465,14 @@ Binomial theorem: $\binom{n}{k} = \frac{n!}{k!(n-k)!}$</pre>
         <div class="feature-card">
           <div class="feature-icon">
             <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="20" cy="20" r="12" stroke="#007ACC" stroke-width="2" fill="none" />
-              <path d="M20 12V20L26 26" stroke="#007ACC" stroke-width="2" stroke-linecap="round" />
+              <rect x="5" y="8" width="12" height="24" rx="1" stroke="#007ACC" stroke-width="2" fill="none" />
+              <rect x="23" y="8" width="12" height="24" rx="1" stroke="#007ACC" stroke-width="2" fill="none" />
+              <path d="M9 14H13M9 18H13M9 22H13" stroke="#28a745" stroke-width="1.5" stroke-linecap="round" />
+              <path d="M27 14H31M27 18H31M27 22H31" stroke="#dc3545" stroke-width="1.5" stroke-linecap="round" />
             </svg>
           </div>
-          <h3>Fully Static</h3>
-          <p>No server required. Works entirely in your browser with no data sent anywhere.</p>
+          <h3>Diff Checker</h3>
+          <p>Compare left and right pages side-by-side with visual diff highlighting in book view mode.</p>
         </div>
       </div>
     </div>
@@ -1274,6 +1343,207 @@ body.dark-theme .mermaid-example:hover {
   transform: translateX(2px);
 }
 
+/* Diff Checker Section */
+.diff-section {
+  padding: 80px 32px;
+  background: var(--page-bg);
+  border-top: 1px solid var(--border-color);
+}
+
+.diff-content {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.diff-example {
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 24px;
+  margin-top: 32px;
+}
+
+.diff-example-header {
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.diff-example-header h3 {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 8px;
+  color: var(--text-color);
+}
+
+.diff-example-header p {
+  font-size: 14px;
+  margin: 0;
+  color: var(--text-color);
+  opacity: 0.6;
+}
+
+.diff-example-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.diff-pane {
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.diff-pane-header {
+  background: var(--page-bg);
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-color);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.diff-pane-body {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.diff-pane-body .diff-line {
+  padding: 2px 8px;
+  margin: 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.diff-pane-body .diff-symbol {
+  display: inline-block;
+  width: 20px;
+  font-weight: bold;
+  margin-right: 8px;
+  user-select: none;
+}
+
+.diff-pane-body .diff-line-added {
+  background-color: #e6ffed;
+  border-left: 3px solid #28a745;
+  color: #24292f;
+}
+
+.diff-pane-body .diff-line-added .diff-symbol {
+  color: #28a745;
+}
+
+.diff-pane-body .diff-line-removed {
+  background-color: #ffeef0;
+  border-left: 3px solid #dc3545;
+  color: #24292f;
+}
+
+.diff-pane-body .diff-line-removed .diff-symbol {
+  color: #dc3545;
+}
+
+.diff-pane-body .diff-line-placeholder {
+  background-color: #f5f5f5;
+  border-left: 3px solid #d0d0d0;
+  color: #57606a;
+}
+
+.diff-pane-body .diff-line-placeholder .diff-symbol {
+  color: #999;
+}
+
+.diff-pane-body .diff-line-unchanged {
+  background-color: transparent;
+  border-left: 3px solid transparent;
+}
+
+.diff-legend {
+  display: flex;
+  gap: 24px;
+  justify-content: center;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-color);
+}
+
+.diff-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-color);
+}
+
+.diff-legend-box {
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  border: 1px solid var(--border-color);
+}
+
+.diff-legend-added {
+  background-color: #e6ffed;
+  border-color: #28a745;
+}
+
+.diff-legend-removed {
+  background-color: #ffeef0;
+  border-color: #dc3545;
+}
+
+.diff-legend-placeholder {
+  background-color: #f5f5f5;
+  border-color: #d0d0d0;
+}
+
+/* Dark theme diff colors */
+body.dark-theme .diff-pane-body .diff-line-added {
+  background-color: #1e4620;
+  border-left-color: #3fb950;
+  color: #c9d1d9;
+}
+
+body.dark-theme .diff-pane-body .diff-line-added .diff-symbol {
+  color: #3fb950;
+}
+
+body.dark-theme .diff-pane-body .diff-line-removed {
+  background-color: #4a1c1c;
+  border-left-color: #f85149;
+  color: #252627;
+}
+
+body.dark-theme .diff-pane-body .diff-line-removed .diff-symbol {
+  color: #f85149;
+}
+
+body.dark-theme .diff-pane-body .diff-line-placeholder {
+  background-color: #0d1117;
+  border-left-color: #444;
+  color: #8b949e;
+}
+
+body.dark-theme .diff-pane-body .diff-line-placeholder .diff-symbol {
+  color: #666;
+}
+
+body.dark-theme .diff-legend-added {
+  background-color: #1e4620;
+  border-color: #3fb950;
+}
+
+body.dark-theme .diff-legend-removed {
+  background-color: #4a1c1c;
+  border-color: #f85149;
+}
+
+body.dark-theme .diff-legend-placeholder {
+  background-color: #0d1117;
+  border-color: #444;
+}
+
 /* Mathematical Expressions Section */
 .math-section {
   padding: 80px 32px;
@@ -1400,7 +1670,7 @@ body.dark-theme .math-rendered .katex .minner {
 
 /* Features Section */
 .features {
-  padding: 60px 32px 100px;
+  padding: 80px 32px;
   background: var(--bg-color);
 }
 
@@ -1463,7 +1733,7 @@ body.dark-theme .feature-card:hover {
 .home-footer {
   background: var(--page-bg);
   border-top: 1px solid var(--border-color);
-  padding: 60px 32px 32px;
+  padding: 80px 32px 32px;
 }
 
 .footer-content {
@@ -1628,6 +1898,20 @@ body.dark-theme .feature-card:hover {
 
   .math-examples {
     grid-template-columns: 1fr;
+  }
+
+  .diff-section {
+    padding: 60px 20px;
+  }
+
+  .diff-example-content {
+    grid-template-columns: 1fr;
+  }
+
+  .diff-legend {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
   }
 
   .footer-grid {
