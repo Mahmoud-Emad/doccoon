@@ -333,6 +333,11 @@
     "@types/d3-transition" "*"
     "@types/d3-zoom" "*"
 
+"@types/diff@^7.0.2":
+  version "7.0.2"
+  resolved "https://registry.npmjs.org/@types/diff/-/diff-7.0.2.tgz"
+  integrity sha512-JSWRMozjFKsGlEjiiKajUjIJVKuKdE3oVy2DNtK+fUo8q82nhFZ2CPQwicAIkXrofahDXrWJ7mjelvZphMS98Q==
+
 "@types/estree@1.0.8":
   version "1.0.8"
   resolved "https://registry.npmjs.org/@types/estree/-/estree-1.0.8.tgz"
@@ -870,6 +875,11 @@ delaunator@5:
   integrity sha512-8nvh+XBe96aCESrGOqMp/84b13H9cdKbG5P2ejQCh4d4sK9RL4371qou9drQjMhvnPmhWl5hnmqbEE0fXr9Xnw==
   dependencies:
     robust-predicates "^3.0.2"
+
+diff@^8.0.2:
+  version "8.0.2"
+  resolved "https://registry.npmjs.org/diff/-/diff-8.0.2.tgz"
+  integrity sha512-sSuxWU5j5SR9QQji/o2qMvqRNYRDOcBTgsJ/DeCf4iSN4gW+gNMXM7wFIP+fdXZxoNiAnHUTGjCr+TSWXdRDKg==
 
 dompurify@^3.2.5:
   version "3.3.0"

@@ -11,7 +11,8 @@
       </router-link>
 
       <!-- File Menu -->
-      <div class="navbar-item navbar-dropdown" @click="toggleDropdown('file')" :class="{ active: activeDropdown === 'file' }">
+      <div class="navbar-item navbar-dropdown" @click="toggleDropdown('file')"
+        :class="{ active: activeDropdown === 'file' }">
         <span>File</span>
         <div v-if="activeDropdown === 'file'" class="dropdown-menu" @click.stop>
           <button class="dropdown-item" @click="handleNew">
@@ -32,7 +33,8 @@
       </div>
 
       <!-- Edit Menu -->
-      <div class="navbar-item navbar-dropdown" @click="toggleDropdown('edit')" :class="{ active: activeDropdown === 'edit' }">
+      <div class="navbar-item navbar-dropdown" @click="toggleDropdown('edit')"
+        :class="{ active: activeDropdown === 'edit' }">
         <span>Edit</span>
         <div v-if="activeDropdown === 'edit'" class="dropdown-menu" @click.stop>
           <button class="dropdown-item" @click="handleAddPage">
@@ -53,7 +55,8 @@
       </div>
 
       <!-- View Menu -->
-      <div class="navbar-item navbar-dropdown" @click="toggleDropdown('view')" :class="{ active: activeDropdown === 'view' }">
+      <div class="navbar-item navbar-dropdown" @click="toggleDropdown('view')"
+        :class="{ active: activeDropdown === 'view' }">
         <span>View</span>
         <div v-if="activeDropdown === 'view'" class="dropdown-menu" @click.stop>
           <button class="dropdown-item" @click="handleToggleView">
@@ -69,6 +72,12 @@
               <line x1="12" y1="3" x2="12" y2="21"></line>
             </svg>
             {{ layoutMode === 'book' ? 'Page View' : 'Book View' }}
+          </button>
+          <button v-if="isViewMode && layoutMode === 'book'" class="dropdown-item" @click="handleToggleDiff">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"></path>
+            </svg>
+            {{ isDiffMode ? 'Hide Diff' : 'Show Diff' }}
           </button>
           <div class="dropdown-divider"></div>
           <button class="dropdown-item" @click="handleToggleTheme">
@@ -98,6 +107,7 @@ const props = defineProps<{
   isViewMode: boolean;
   isDarkTheme: boolean;
   layoutMode: 'book' | 'page';
+  isDiffMode?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -108,6 +118,7 @@ const emit = defineEmits<{
   'toggle-view': [];
   'toggle-layout': [];
   'toggle-theme': [];
+  'toggle-diff': [];
 }>();
 
 const activeDropdown = ref<string | null>(null);
@@ -151,6 +162,11 @@ function handleToggleView() {
 
 function handleToggleLayout() {
   emit('toggle-layout');
+  closeDropdown();
+}
+
+function handleToggleDiff() {
+  emit('toggle-diff');
   closeDropdown();
 }
 
@@ -295,4 +311,3 @@ body.dark-theme .dropdown-menu {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 </style>
-

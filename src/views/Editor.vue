@@ -4,12 +4,13 @@
   <div class="container" :class="{ loaded: !isLoading }">
     <!-- Editor Navbar -->
     <EditorNavbar :filename="book.filename" :is-view-mode="isViewMode" :is-dark-theme="isDarkTheme"
-      :layout-mode="layoutMode" @new="handleNewBook" @delete-book="handleDeleteBook" @add-page="addSpread"
-      @delete-page="handleDeletePage" @toggle-view="handleToggleView" @toggle-layout="handleToggleLayoutMode"
-      @toggle-theme="toggleTheme" />
+      :layout-mode="layoutMode" :is-diff-mode="isDiffMode" @new="handleNewBook" @delete-book="handleDeleteBook"
+      @add-page="addSpread" @delete-page="handleDeletePage" @toggle-view="handleToggleView"
+      @toggle-layout="handleToggleLayoutMode" @toggle-diff="toggleDiffMode" @toggle-theme="toggleTheme" />
 
-    <BookSpread :spread="displaySpread" :is-view-mode="isViewMode" :layout-mode="layoutMode"
-      :render-markdown="renderMarkdown" @update:spread="updateCurrentSpread" @open-page-view="handleOpenPageView"
+    <BookSpread :spread="displaySpread" :is-view-mode="isViewMode" :layout-mode="layoutMode" :is-diff-mode="isDiffMode"
+      :left-diff-content="leftDiffContent" :right-diff-content="rightDiffContent" :render-markdown="renderMarkdown"
+      @update:spread="updateCurrentSpread" @open-page-view="handleOpenPageView"
       @toggle-layout="handleToggleLayoutMode" />
 
     <FooterControls :current-index="currentSpreadIndex" :total-pages="totalSpreads" :can-go-previous="canGoPrevious"
@@ -45,6 +46,7 @@ import { useLayoutMode } from '@/composables/useLayoutMode';
 import { useStorage } from '@/composables/useStorage';
 import { useMarkdown } from '@/composables/useMarkdown';
 import { useModal } from '@/composables/useModal';
+import { useDiff } from '@/composables/useDiff';
 
 import type { Spread } from '@/types';
 
@@ -77,6 +79,7 @@ const { layoutMode, toggleLayoutMode, setLayoutMode } = useLayoutMode();
 const { saveStatus, loadBook, deleteBook } = useStorage(book, isViewingExample);
 const { renderMarkdown } = useMarkdown(isDarkTheme);
 const { modalState, showModal, confirm, cancel } = useModal();
+const { isDiffMode, toggleDiffMode, computeDiff, renderDiffToHtml } = useDiff();
 
 // Loading state
 const isLoading = ref(true);
@@ -104,6 +107,25 @@ const displaySpread = computed(() => {
   }
   // In book view mode, show both pages normally
   return currentSpread.value;
+});
+
+// Computed diff content for left and right pages
+const leftDiffContent = computed(() => {
+  if (!isDiffMode.value || !isViewMode.value || layoutMode.value !== 'book') {
+    return undefined;
+  }
+  const diff = computeDiff(currentSpread.value.left, currentSpread.value.right);
+  // Show removed lines on left (content in left but not in right)
+  return renderDiffToHtml(diff.left);
+});
+
+const rightDiffContent = computed(() => {
+  if (!isDiffMode.value || !isViewMode.value || layoutMode.value !== 'book') {
+    return undefined;
+  }
+  const diff = computeDiff(currentSpread.value.left, currentSpread.value.right);
+  // Show added lines on right (content in right but not in left)
+  return renderDiffToHtml(diff.right);
 });
 
 // Update current spread

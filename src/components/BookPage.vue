@@ -40,8 +40,8 @@
           @dragover="onDragOver" @dragleave="onDragLeave" @drop="onDrop"></textarea>
       </div>
 
-      <!-- View Mode: Rendered Markdown -->
-      <div v-if="isViewMode" ref="viewRef" class="page-view"></div>
+      <!-- View Mode: Rendered Markdown or Diff -->
+      <div v-if="isViewMode" ref="viewRef" class="page-view" :class="{ 'diff-view': isDiffMode }"></div>
     </div>
   </div>
 </template>
@@ -56,6 +56,8 @@ const props = defineProps<{
   side: 'left' | 'right';
   width: string;
   layoutMode?: 'book' | 'page';
+  isDiffMode?: boolean;
+  diffContent?: string;
   renderMarkdown?: (markdown: string, element: HTMLElement) => Promise<void>;
 }>();
 
@@ -150,27 +152,56 @@ function onDrop(e: DragEvent) {
   }, cursorPos);
 }
 
-// Watch for view mode changes and render markdown
-watch(() => props.isViewMode, async (newValue) => {
-  if (newValue && viewRef.value && props.renderMarkdown) {
-    await nextTick();
+// Render content based on mode (normal or diff)
+async function renderContent() {
+  if (!viewRef.value) return;
+
+  if (props.isDiffMode && props.diffContent !== undefined) {
+    // Render diff view
+    viewRef.value.innerHTML = props.diffContent;
+  } else if (props.renderMarkdown) {
+    // Render normal markdown
     await props.renderMarkdown(props.content, viewRef.value);
+  }
+}
+
+// Watch for view mode changes and render markdown or diff
+watch(() => props.isViewMode, async (newValue) => {
+  if (newValue && viewRef.value) {
+    await nextTick();
+    await renderContent();
   }
 });
 
 // Watch for content changes in view mode
-watch(() => props.content, async (newValue) => {
-  if (props.isViewMode && viewRef.value && props.renderMarkdown) {
+watch(() => props.content, async () => {
+  if (props.isViewMode && viewRef.value) {
     await nextTick();
-    await props.renderMarkdown(newValue, viewRef.value);
+    await renderContent();
+  }
+});
+
+// Watch for diff mode changes
+watch(() => props.isDiffMode, async () => {
+  if (props.isViewMode && viewRef.value) {
+    await nextTick();
+    await renderContent();
+  }
+});
+
+// Watch for diff content changes
+watch(() => props.diffContent, async () => {
+  if (props.isViewMode && viewRef.value && props.isDiffMode) {
+    await nextTick();
+    await renderContent();
   }
 });
 
 // Initial render when component mounts
 watch(viewRef, async (newValue) => {
-  if (newValue && props.isViewMode && props.renderMarkdown) {
+  if (newValue && props.isViewMode) {
     await nextTick();
-    await props.renderMarkdown(props.content, newValue);
+    await renderContent();
   }
 }, { immediate: true });
 </script>
@@ -291,5 +322,90 @@ watch(viewRef, async (newValue) => {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* Diff View Styles */
+.diff-view {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.diff-view :deep(.diff-line) {
+  padding: 2px 8px;
+  margin: 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  position: relative;
+  line-height: 1.4;
+}
+
+.diff-view :deep(.diff-symbol) {
+  display: inline-block;
+  width: 20px;
+  font-weight: bold;
+  margin-right: 8px;
+  user-select: none;
+}
+
+.diff-view :deep(.diff-line-added) {
+  background-color: #e6ffed;
+  border-left: 3px solid #28a745;
+  color: #24292f;
+}
+
+.diff-view :deep(.diff-line-added .diff-symbol) {
+  color: #28a745;
+}
+
+.diff-view :deep(.diff-line-removed) {
+  background-color: #ffeef0;
+  border-left: 3px solid #dc3545;
+  color: #24292f;
+}
+
+.diff-view :deep(.diff-line-removed .diff-symbol) {
+  color: #dc3545;
+}
+
+.diff-view :deep(.diff-line-placeholder) {
+  background-color: #f5f5f5;
+  border-left: 3px solid #d0d0d0;
+  color: #57606a;
+}
+
+.diff-view :deep(.diff-line-placeholder .diff-symbol) {
+  color: #999;
+}
+
+/* Dark theme diff colors */
+:root[data-theme="dark"] .diff-view :deep(.diff-line-added) {
+  background-color: #1e4620;
+  border-left-color: #3fb950;
+  color: #c9d1d9;
+}
+
+:root[data-theme="dark"] .diff-view :deep(.diff-line-added .diff-symbol) {
+  color: #3fb950;
+}
+
+:root[data-theme="dark"] .diff-view :deep(.diff-line-removed) {
+  background-color: #4a1c1c;
+  border-left-color: #f85149;
+  color: #c9d1d9;
+}
+
+:root[data-theme="dark"] .diff-view :deep(.diff-line-removed .diff-symbol) {
+  color: #f85149;
+}
+
+:root[data-theme="dark"] .diff-view :deep(.diff-line-placeholder) {
+  background-color: #0d1117;
+  border-left-color: #444;
+  color: #8b949e;
+}
+
+:root[data-theme="dark"] .diff-view :deep(.diff-line-placeholder .diff-symbol) {
+  color: #666;
 }
 </style>

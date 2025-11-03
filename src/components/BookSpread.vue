@@ -2,15 +2,16 @@
   <div class="book-wrapper">
     <div class="book" :class="{ 'page-view': layoutMode === 'page' }">
       <BookPage :content="spread.left" :is-view-mode="isViewMode" side="left"
-        :width="layoutMode === 'page' ? '1' : spread.leftWidth" :layout-mode="layoutMode"
-        :render-markdown="renderMarkdown" @update:content="updateLeft" @open-in-page-view="openLeftInPageView"
-        @toggle-layout="toggleLayout" />
+        :width="layoutMode === 'page' ? '1' : spread.leftWidth" :layout-mode="layoutMode" :is-diff-mode="isDiffMode"
+        :diff-content="leftDiffContent" :render-markdown="renderMarkdown" @update:content="updateLeft"
+        @open-in-page-view="openLeftInPageView" @toggle-layout="toggleLayout" />
 
       <BookmarkSeparator v-if="layoutMode === 'book'" @start-resize="startResize" />
 
       <BookPage v-if="layoutMode === 'book'" :content="spread.right" :is-view-mode="isViewMode" side="right"
-        :width="spread.rightWidth" :layout-mode="layoutMode" :render-markdown="renderMarkdown"
-        @update:content="updateRight" @open-in-page-view="openRightInPageView" @toggle-layout="toggleLayout" />
+        :width="spread.rightWidth" :layout-mode="layoutMode" :is-diff-mode="isDiffMode" :diff-content="rightDiffContent"
+        :render-markdown="renderMarkdown" @update:content="updateRight" @open-in-page-view="openRightInPageView"
+        @toggle-layout="toggleLayout" />
     </div>
   </div>
 </template>
@@ -26,6 +27,9 @@ const props = defineProps<{
   spread: Spread;
   isViewMode: boolean;
   layoutMode: 'book' | 'page';
+  isDiffMode?: boolean;
+  leftDiffContent?: string;
+  rightDiffContent?: string;
   renderMarkdown?: (markdown: string, element: HTMLElement) => Promise<void>;
 }>();
 
