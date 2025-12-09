@@ -1,4 +1,4 @@
-# Open Book
+# [Open Book](https://openbook.gent01.grid.tf/)
 
 A fully static front-end markdown-based book editor with a beautiful two-page spread interface.
 
