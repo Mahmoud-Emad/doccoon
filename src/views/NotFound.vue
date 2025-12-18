@@ -1,21 +1,6 @@
 <template>
   <div class="not-found">
     <div class="not-found-content">
-      <!-- 404 Icon -->
-      <div class="error-icon">
-        <svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <!-- Book with X -->
-          <rect x="20" y="30" width="80" height="60" rx="4" fill="#007ACC" opacity="0.2" />
-          <rect x="25" y="35" width="35" height="50" fill="currentColor" opacity="0.3" />
-          <rect x="62" y="35" width="35" height="50" fill="currentColor" opacity="0.3" />
-          <rect x="20" y="30" width="8" height="60" fill="#007ACC" opacity="0.4" />
-
-          <!-- X Mark -->
-          <line x1="40" y1="50" x2="80" y2="70" stroke="#ff6b6b" stroke-width="6" stroke-linecap="round" />
-          <line x1="80" y1="50" x2="40" y2="70" stroke="#ff6b6b" stroke-width="6" stroke-linecap="round" />
-        </svg>
-      </div>
-
       <!-- Error Message -->
       <h1 class="error-code">404</h1>
       <h2 class="error-title">Page Not Found</h2>

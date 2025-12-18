@@ -11,6 +11,7 @@
           <div class="navbar-links">
             <router-link to="/edit" class="navbar-link">Editor</router-link>
             <router-link to="/view" class="navbar-link">View</router-link>
+            <router-link to="/docs" class="navbar-link">Docs</router-link>
           </div>
         </div>
 
@@ -591,8 +592,8 @@ Binomial theorem: $\binom{n}{k} = \frac{n!}{k!(n-k)!}$</pre>
             <ul class="footer-links">
               <li><router-link to="/edit">Editor</router-link></li>
               <li><router-link to="/view">View Mode</router-link></li>
-              <li><a href="#" @click.prevent>Documentation</a></li>
-              <li><a href="#" @click.prevent>GitHub</a></li>
+              <li><router-link to="/docs">Documentation</router-link></li>
+              <li><a href="https://github.com/Mahmoud-Emad/openbook" target="_blank" rel="noopener noreferrer">GitHub</a></li>
             </ul>
           </div>
         </div>

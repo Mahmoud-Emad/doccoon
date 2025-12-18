@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import Home from '@/views/Home.vue';
 import Editor from '@/views/Editor.vue';
+import Docs from '@/views/Docs.vue';
 import NotFound from '@/views/NotFound.vue';
 
 const router = createRouter({
@@ -22,6 +23,11 @@ const router = createRouter({
       name: 'View',
       component: Editor,
       meta: { defaultViewMode: true }
+    },
+    {
+      path: '/docs',
+      name: 'Docs',
+      component: Docs
     },
     {
       path: '/:pathMatch(.*)*',
