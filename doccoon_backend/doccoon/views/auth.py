@@ -4,7 +4,6 @@ from typing import Dict
 from django.conf import settings
 from django.contrib.auth.hashers import check_password, make_password
 from django.contrib.auth.tokens import default_token_generator
-from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
@@ -29,6 +28,7 @@ from doccoon.serializers.auth import (
 )
 from doccoon.services.settings import get_or_create_settings
 from doccoon.services.user import get_user_by_email
+from doccoon.tasks import send_password_reset_email_task
 
 
 class RegisterApiView(GenericAPIView):
@@ -258,34 +258,12 @@ class PasswordResetRequestView(GenericAPIView):
         frontend_url = getattr(settings, "FRONTEND_URL", "http://localhost:5173")
         reset_url = f"{frontend_url}/reset-password?token={token}&uid={uid}"
 
-        # Send email
-        subject = "Reset your Doccoon password"
-        message = f"""Hi {user.first_name},
-
-You requested to reset your password for your Doccoon account.
-
-Click the link below to reset your password:
-{reset_url}
-
-This link will expire in 24 hours.
-
-If you didn't request this, you can safely ignore this email.
-
-Best,
-The Doccoon Team
-"""
-        try:
-            send_mail(
-                subject=subject,
-                message=message,
-                from_email=settings.EMAIL_HOST_USER,
-                recipient_list=[email],
-                fail_silently=False,
-            )
-        except Exception:
-            return CustomResponse.bad_request(
-                message="Failed to send reset email. Please try again later."
-            )
+        # Send email asynchronously via Celery
+        send_password_reset_email_task.delay(
+            email=email,
+            first_name=user.first_name or "there",
+            reset_url=reset_url,
+        )
 
         return CustomResponse.success(message=success_message)
 
