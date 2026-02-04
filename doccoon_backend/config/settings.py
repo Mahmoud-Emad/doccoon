@@ -12,11 +12,13 @@ DEBUG = config("DJANGO_DEBUG") == "True"
 ALLOWED_HOSTS = [
     config("SERVER_DOMAIN_NAME"),  # Server domain
     config("CLIENT_DOMAIN_NAME"),  # Client domain
+    "localhost",  # For internal Docker communication
+    "127.0.0.1",
 ]
 
-# Add localhost only in development
+# Add 0.0.0.0 only in development
 if DEBUG:
-    ALLOWED_HOSTS += ["127.0.0.1", "0.0.0.0", "localhost"]
+    ALLOWED_HOSTS += ["0.0.0.0"]
 
 # Application definition
 INSTALLED_APPS = [
