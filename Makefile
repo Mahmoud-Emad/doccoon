@@ -15,4 +15,4 @@ run-frontend:
 	cd doccoon_frontend && npm run dev
 
 run-docker:
-	docker-compose up --build
+	docker compose up --build
