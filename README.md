@@ -1,85 +1,85 @@
-# [Open Book](https://openbook.gent01.grid.tf/)
+# Doccoon
 
-A fully static front-end markdown-based book editor with a beautiful two-page spread interface.
+A modern markdown book editor with a two-page spread interface. Supports Mermaid diagrams, LaTeX math, syntax highlighting, AI-powered writing assistance, and cloud sync.
+
+**Live Demo:** [https://doccoon.com](https://doccoon.com)
 
 ## Features
 
-- **Markdown Support** - Write content using standard Markdown syntax
-- **Mermaid Diagrams** - Create flowcharts, sequence diagrams, and more
-- **Math Expressions** - Render LaTeX math equations with KaTeX
-- **Syntax Highlighting** - Code blocks with syntax highlighting
-- **Dark & Light Themes** - Toggle between themes
-- **Two-Page Spread** - Book-like reading and editing experience
-- **Page View Mode** - Focus on a single page
-- **Line Numbers** - Track your position while editing
-- **Auto-Save** - Your work is automatically saved to browser storage
-- **Fully Static** - No backend required, runs entirely in the browser
+- Two-page book spread editor
+- Full Markdown support (GFM)
+- Mermaid diagrams (flowcharts, sequence diagrams, etc.)
+- LaTeX math rendering (KaTeX)
+- Syntax highlighting (100+ languages)
+- AI writing tools (OpenAI/Gemini integration)
+- Cloud sync with auto-save
+- Share pages/books via secure links
+- Dark/Light theme
+- Keyboard shortcuts
 
-## Getting Started
+## Project Structure
 
-### Option 1: Docker (Recommended)
-
-```bash
-# Build and run with Docker Compose
-docker-compose up -d
-
-# Access the application at http://localhost:8080
+```
+doccoon/
+├── doccoon_backend/     # Django REST API
+├── doccoon_frontend/    # Vue.js SPA
+├── docker-compose.yml   # Full stack orchestration
+└── .env.example         # Environment variables template
 ```
 
-To stop the container:
+## Quick Start with Docker
 
 ```bash
-docker-compose down
+# 1. Copy environment template
+cp .env.example .env
+
+# 2. Edit .env with your values
+nano .env
+
+# 3. Build and start all services
+docker-compose up --build -d
 ```
 
-### Option 2: Local Development
+Services will be available at:
+- Frontend: http://localhost (port 80)
+- Backend API: http://localhost:8000
+- Database: PostgreSQL on port 5432 (internal)
+
+## Development Setup
+
+### Backend (Django)
 
 ```bash
-# Install dependencies
+cd doccoon_backend
+cp .env.example .env
+uv sync
+uv run python manage.py migrate
+uv run python manage.py runserver
+```
+
+### Frontend (Vue.js)
+
+```bash
+cd doccoon_frontend
+cp .env.example .env
 npm install
-
-# Start development server
 npm run dev
-
-# Build for production
-npm run build
 ```
 
-### Option 3: Docker without Compose
+See individual README files in each directory for more details.
 
-```bash
-# Build the Docker image
-docker build -t openbook .
+## Tech Stack
 
-# Run the container
-docker run -d -p 8080:80 --name openbook openbook
+**Backend:**
+- Python 3.14
+- Django 6.0 + Django REST Framework
+- PostgreSQL
+- uv (package manager)
 
-# Access the application at http://localhost:8080
-```
-
-### Usage
-
-1. Open the application in your browser
-2. Click "Get Started" to open the editor
-3. Start writing in Markdown format
-4. Toggle between Edit and View modes to see your rendered content
-5. Switch between Book View (two pages) and Page View (single page)
-6. Your work is automatically saved
-
-## Keyboard Shortcuts
-
-- **Edit/View Mode** - Toggle between editing and viewing
-- **Book/Page View** - Switch between two-page and single-page layouts
-- **Theme Toggle** - Switch between light and dark themes
-
-## Technology Stack
-
-- Vue 3
-- TypeScript
+**Frontend:**
+- Vue 3 + TypeScript
 - Vite
-- Marked.js (Markdown rendering)
-- KaTeX (Math rendering)
-- Mermaid (Diagram rendering)
+- Tailwind CSS 4
 
 ## License
 
@@ -87,4 +87,4 @@ MIT
 
 ## Author
 
-© 2025 Open Book
+2025 Doccoon

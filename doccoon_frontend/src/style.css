@@ -1,0 +1,25 @@
+/**
+ * Global base styles - minimal reset only.
+ * Main styles are in assets/styles/main.css
+ */
+
+/* Ensure proper box-sizing inheritance */
+*,
+*::before,
+*::after {
+    box-sizing: inherit;
+}
+
+html {
+    box-sizing: border-box;
+}
+
+/* Remove default margins */
+body {
+    margin: 0;
+}
+
+/* Root app container - allow full viewport */
+#app {
+    min-height: 100vh;
+}

@@ -1,14 +1,159 @@
-version: '3.8'
+version: "3.8"
 
 services:
-  openbook:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: openbook
-    ports:
-      - "8080:80"
+  # PostgreSQL Database
+  db:
+    image: postgres:16-alpine
+    container_name: doccoon-db
     restart: unless-stopped
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     environment:
-      - NODE_ENV=production
+      POSTGRES_DB: ${DATABASE_NAME:-doccoon}
+      POSTGRES_USER: ${DATABASE_USER:-doccoon}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:?Database password is required}
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${DATABASE_USER:-doccoon} -d ${DATABASE_NAME:-doccoon}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - doccoon-network
 
+  # Django Backend
+  backend:
+    build:
+      context: ./doccoon_backend
+      dockerfile: Dockerfile
+    container_name: doccoon-backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # Django settings
+      DJANGO_DEBUG: ${DJANGO_DEBUG:-False}
+      ENV: ${ENV:-production}
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?Django secret key is required}
+      SERVER_DOMAIN_NAME: ${SERVER_DOMAIN_NAME:?Server domain name is required}
+      CLIENT_DOMAIN_NAME: ${CLIENT_DOMAIN_NAME:?Client domain name is required}
+      # Database
+      DATABASE_NAME: ${DATABASE_NAME:-doccoon}
+      DATABASE_USER: ${DATABASE_USER:-doccoon}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD:?Database password is required}
+      DATABASE_HOST: db
+      DATABASE_PORT: 5432
+      # Email
+      EMAIL_HOST: ${EMAIL_HOST:-}
+      EMAIL: ${EMAIL:-}
+      EMAIL_PASSWORD: ${EMAIL_PASSWORD:-}
+      # OAuth
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
+      # AI
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    networks:
+      - doccoon-network
+
+  # Vue.js Frontend
+  frontend:
+    build:
+      context: ./doccoon_frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:?API base URL is required}
+        VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID:-}
+        VITE_GITHUB_CLIENT_ID: ${VITE_GITHUB_CLIENT_ID:-}
+    container_name: doccoon-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "${FRONTEND_PORT:-80}:80"
+    networks:
+      - doccoon-network
+
+  # PostgreSQL Backup Service
+  # Runs daily backups at 2 AM, keeps 7 daily + 4 weekly backups
+  db-backup:
+    image: postgres:16-alpine
+    container_name: doccoon-db-backup
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGHOST: db
+      PGDATABASE: ${DATABASE_NAME:-doccoon}
+      PGUSER: ${DATABASE_USER:-doccoon}
+      PGPASSWORD: ${DATABASE_PASSWORD:?Database password is required}
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-7}
+      BACKUP_RETENTION_WEEKS: ${BACKUP_RETENTION_WEEKS:-4}
+    volumes:
+      - db_backups:/backups
+      - ./scripts/backup.sh:/backup.sh:ro
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        # Install required tools
+        apk add --no-cache dcron
+
+        # Create backup script wrapper
+        cat > /run-backup.sh << 'EOF'
+        #!/bin/sh
+        set -e
+        TIMESTAMP=$$(date +%Y%m%d_%H%M%S)
+        DAY_OF_WEEK=$$(date +%u)
+        BACKUP_DIR=/backups
+
+        echo "[$$TIMESTAMP] Starting database backup..."
+
+        # Create daily backup
+        pg_dump -Fc > "$$BACKUP_DIR/daily_$$TIMESTAMP.dump"
+        echo "[$$TIMESTAMP] Daily backup created: daily_$$TIMESTAMP.dump"
+
+        # On Sundays, also create weekly backup
+        if [ "$$DAY_OF_WEEK" = "7" ]; then
+          cp "$$BACKUP_DIR/daily_$$TIMESTAMP.dump" "$$BACKUP_DIR/weekly_$$TIMESTAMP.dump"
+          echo "[$$TIMESTAMP] Weekly backup created: weekly_$$TIMESTAMP.dump"
+        fi
+
+        # Cleanup old daily backups (keep last N days)
+        find "$$BACKUP_DIR" -name "daily_*.dump" -mtime +$${BACKUP_RETENTION_DAYS:-7} -delete
+        echo "[$$TIMESTAMP] Cleaned up daily backups older than $${BACKUP_RETENTION_DAYS:-7} days"
+
+        # Cleanup old weekly backups (keep last N weeks)
+        WEEKLY_DAYS=$$(($${BACKUP_RETENTION_WEEKS:-4} * 7))
+        find "$$BACKUP_DIR" -name "weekly_*.dump" -mtime +$$WEEKLY_DAYS -delete
+        echo "[$$TIMESTAMP] Cleaned up weekly backups older than $${BACKUP_RETENTION_WEEKS:-4} weeks"
+
+        echo "[$$TIMESTAMP] Backup complete!"
+        EOF
+        chmod +x /run-backup.sh
+
+        # Run initial backup on startup
+        /run-backup.sh
+
+        # Setup cron job to run at 2 AM daily
+        echo "0 2 * * * /run-backup.sh >> /var/log/backup.log 2>&1" | crontab -
+
+        # Start cron in foreground
+        crond -f -l 2
+    networks:
+      - doccoon-network
+
+volumes:
+  postgres_data:
+  db_backups:
+
+networks:
+  doccoon-network:
+    driver: bridge
