@@ -25,9 +25,17 @@ class IsBookOwner(permissions.BasePermission):
         if book_id is None:
             return True
 
+        # Optimized: only fetch the author_id field, not the entire book
         try:
-            book = doccoon.objects.get(id=book_id)
-        except doccoon.DoesNotExist:
+            author_id = (
+                doccoon.objects.filter(id=book_id)
+                .values_list("author_id", flat=True)
+                .first()
+            )
+        except (ValueError, TypeError):
+            return True  # let the view handle invalid book_id
+
+        if author_id is None:
             return True  # let the view handle 404
 
-        return book.author_id == request.user.id
+        return author_id == request.user.id

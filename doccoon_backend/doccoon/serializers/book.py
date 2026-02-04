@@ -72,7 +72,11 @@ class BookSerializer(serializers.ModelSerializer):
 
 
 class BookListSerializer(BookSerializer):
-    """Serializer for listing books with computed stats."""
+    """Serializer for listing books with computed stats.
+
+    IMPORTANT: The queryset must use prefetch_related('doccoonpage_set') for optimal performance.
+    This serializer uses the prefetched pages to compute stats without additional queries.
+    """
 
     page_count = serializers.SerializerMethodField()
     image_count = serializers.SerializerMethodField()
@@ -97,27 +101,37 @@ class BookListSerializer(BookSerializer):
             "modified_at",
         ]
 
+    def _get_active_pages(self, obj) -> list:
+        """Get active pages from prefetched data to avoid N+1 queries."""
+        # Use prefetched data if available (from prefetch_related)
+        if (
+            hasattr(obj, "_prefetched_objects_cache")
+            and "doccoonpage_set" in obj._prefetched_objects_cache
+        ):
+            return [p for p in obj.doccoonpage_set.all() if not p.is_deleted]
+        # Fallback: filter in DB (slower, but works without prefetch)
+        return list(obj.doccoonpage_set.filter(is_deleted=False))
+
     def get_page_count(self, obj) -> int:
         if hasattr(obj, "_page_count"):
             return obj._page_count
-        return obj.doccoonpage_set.filter(is_deleted=False).count()
+        return len(self._get_active_pages(obj))
 
     def get_image_count(self, obj) -> int:
-        total = 0
-        pages = obj.doccoonpage_set.filter(is_deleted=False)
-        for page in pages:
-            total += len(IMAGE_PATTERN.findall(page.content or ""))
-        return total
+        pages = self._get_active_pages(obj)
+        return sum(len(IMAGE_PATTERN.findall(page.content or "")) for page in pages)
 
     def get_book_size(self, obj) -> int:
-        total = 0
-        pages = obj.doccoonpage_set.filter(is_deleted=False)
-        for page in pages:
-            total += len((page.content or "").encode("utf-8"))
-        return total
+        pages = self._get_active_pages(obj)
+        return sum(len((page.content or "").encode("utf-8")) for page in pages)
 
 
 class GetBookWithPagesSerializer(BookSerializer):
+    """Serializer for book detail with pages.
+
+    IMPORTANT: The queryset should use prefetch_related('doccoonpage_set') for optimal performance.
+    """
+
     pages = serializers.SerializerMethodField()
 
     class Meta:
@@ -126,4 +140,13 @@ class GetBookWithPagesSerializer(BookSerializer):
         read_only_fields = BookSerializer.Meta.read_only_fields + ["pages"]
 
     def get_pages(self, obj):
+        # Use prefetched data if available
+        if (
+            hasattr(obj, "_prefetched_objects_cache")
+            and "doccoonpage_set" in obj._prefetched_objects_cache
+        ):
+            pages = [p for p in obj.doccoonpage_set.all() if not p.is_deleted]
+            pages.sort(key=lambda p: p.page_number)
+            return PageSerializer(pages, many=True).data
+        # Fallback to service function
         return PageSerializer(get_book_pages(obj.id), many=True).data

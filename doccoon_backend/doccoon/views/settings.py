@@ -6,7 +6,7 @@ from doccoon.api.permissions import UserIsAuthenticated
 from doccoon.api.response import CustomResponse
 from doccoon.api.throttling import SettingsThrottle
 from doccoon.serializers.settings import UserSettingsSerializer
-from doccoon.services.settings import get_or_create_settings
+from doccoon.services.settings import get_or_create_settings, invalidate_settings_cache
 
 
 @swagger_auto_schema(tags=["Settings"])
@@ -34,6 +34,8 @@ class UserSettingsApiView(GenericAPIView):
                 data=serializer.errors,
             )
         serializer.save()
+        # Invalidate cache after update
+        invalidate_settings_cache(request.user.id)
         return CustomResponse.success(
             data=serializer.data,
             message="Settings updated successfully.",

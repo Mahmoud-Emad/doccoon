@@ -4,7 +4,14 @@ from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
 class AuthAnonThrottle(AnonRateThrottle):
     """Stricter rate limit for anonymous auth endpoints (login, signup)."""
 
-    rate = "5/minute"
+    rate = "10/minute"
+
+
+class OAuthAnonThrottle(AnonRateThrottle):
+    """Rate limit for OAuth endpoints - separate bucket from regular auth."""
+
+    scope = "oauth"
+    rate = "10/minute"
 
 
 class AuthUserThrottle(UserRateThrottle):

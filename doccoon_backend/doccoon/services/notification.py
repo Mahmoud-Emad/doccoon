@@ -26,8 +26,11 @@ def create_notification(
 
 
 def get_user_notifications(user: User) -> QuerySet:
-    return Notification.objects.filter(user=user, is_deleted=False).order_by(
-        "-created_at"
+    """Get user notifications with optimized query."""
+    return (
+        Notification.objects.filter(user=user, is_deleted=False)
+        .select_related("related_book", "related_page")
+        .order_by("-created_at")
     )
 
 

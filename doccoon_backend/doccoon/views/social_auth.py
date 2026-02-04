@@ -13,7 +13,7 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from doccoon.api.response import CustomResponse
-from doccoon.api.throttling import AuthAnonThrottle
+from doccoon.api.throttling import OAuthAnonThrottle
 from doccoon.models.user import AUTH_PROVIDER, User
 from doccoon.services.settings import get_or_create_settings
 
@@ -76,7 +76,7 @@ class GoogleAuthApiView(GenericAPIView):
     """Exchange Google OAuth access token for JWT tokens."""
 
     serializer_class = SocialAuthSerializer
-    throttle_classes = [AuthAnonThrottle]
+    throttle_classes = [OAuthAnonThrottle]
 
     @swagger_auto_schema(tags=["Auth"])
     def post(self, request: Request) -> Response:
@@ -136,7 +136,7 @@ class GitHubAuthApiView(GenericAPIView):
     """Exchange GitHub OAuth authorization code for JWT tokens."""
 
     serializer_class = SocialAuthSerializer
-    throttle_classes = [AuthAnonThrottle]
+    throttle_classes = [OAuthAnonThrottle]
 
     @swagger_auto_schema(tags=["Auth"])
     def post(self, request: Request) -> Response:

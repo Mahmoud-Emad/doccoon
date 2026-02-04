@@ -142,7 +142,16 @@ REST_FRAMEWORK = {
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
-    "PAGE_SIZE": 10,  # Hint: if you want to test pagenation try to change it to lower number then test.
+    "PAGE_SIZE": 10,
+    # Performance optimizations
+    "DEFAULT_RENDERER_CLASSES": ("rest_framework.renderers.JSONRenderer",)
+    if not DEBUG
+    else (
+        "rest_framework.renderers.JSONRenderer",
+        "rest_framework.renderers.BrowsableAPIRenderer",
+    ),
+    # Disable browsable API in production for performance
+    "DEFAULT_PARSER_CLASSES": ("rest_framework.parsers.JSONParser",),
 }
 
 SIMPLE_JWT = {
@@ -200,6 +209,16 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "server", "mediafiles")
 MEDIA_URL = "/media/"
 # specify static root
 STATIC_ROOT = os.path.join(BASE_DIR, "server", "staticfiles")
+
+# Whitenoise configuration for efficient static file serving
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
 
 
 # Default primary key field type
@@ -271,6 +290,26 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = config("EMAIL")
 EMAIL_HOST_PASSWORD = config("EMAIL_PASSWORD")
 EMAIL_TIMEOUT = 10  # Timeout in seconds to prevent blocking workers
+
+# Redis cache configuration - use Redis for caching in production
+REDIS_URL = config("CELERY_BROKER_URL", default="redis://localhost:6379/0")
+
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": REDIS_URL,
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        },
+        "KEY_PREFIX": "doccoon",
+        "TIMEOUT": 300,  # 5 minutes default
+    }
+}
+
+# Use cache for sessions in production (faster than DB)
+if config("ENV") == "production":
+    SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+    SESSION_CACHE_ALIAS = "default"
 
 # Celery configuration
 CELERY_BROKER_URL = config("CELERY_BROKER_URL", default="redis://localhost:6379/0")

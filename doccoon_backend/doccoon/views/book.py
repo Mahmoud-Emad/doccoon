@@ -32,12 +32,14 @@ class BookListCreateApiView(ListAPIView):
     throttle_classes = [BookOperationThrottle]
 
     def get_queryset(self):
-        author = get_user_by_id(self.request.user.id)
+        # Use request.user directly instead of extra DB lookup
         return (
             doccoon.objects.select_related("author")
             .prefetch_related("doccoonpage_set")
             .filter(
-                author=author, status__in=[BOOK_STATUS.Draft, BOOK_STATUS.Published]
+                author_id=self.request.user.id,
+                status__in=[BOOK_STATUS.Draft, BOOK_STATUS.Published],
+                is_deleted=False,
             )
             .order_by("-created_at")
         )
@@ -50,8 +52,8 @@ class BookListCreateApiView(ListAPIView):
                 data=serializer.errors,
             )
 
-        author = get_user_by_id(request.user.id)
-        book = serializer.save(author=author)
+        # Use request.user directly - no need for extra DB lookup
+        book = serializer.save(author=request.user)
 
         return CustomResponse.success(
             data=BookSerializer(book).data,
