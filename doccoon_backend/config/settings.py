@@ -102,6 +102,11 @@ if config("ENV") == "production":
             "PASSWORD": config("DATABASE_PASSWORD"),
             "HOST": config("DATABASE_HOST"),
             "PORT": config("DATABASE_PORT"),
+            "CONN_MAX_AGE": 60,  # Keep connections alive for 60 seconds
+            "CONN_HEALTH_CHECKS": True,  # Verify connections before use
+            "OPTIONS": {
+                "connect_timeout": 10,
+            },
         }
     }
 else:
@@ -325,7 +330,11 @@ LOGGING = {
     "disable_existing_loggers": False,
     "formatters": {
         "verbose": {
-            "format": "{levelname} {asctime} {module} {message}",
+            "format": "{levelname} {asctime} {module} {process:d} {thread:d} {message}",
+            "style": "{",
+        },
+        "simple": {
+            "format": "{levelname} {asctime} {message}",
             "style": "{",
         },
     },
@@ -337,12 +346,22 @@ LOGGING = {
     },
     "root": {
         "handlers": ["console"],
-        "level": "DEBUG" if DEBUG else "WARNING",
+        "level": "DEBUG" if DEBUG else "INFO",
     },
     "loggers": {
         "django": {
             "handlers": ["console"],
-            "level": "INFO" if DEBUG else "WARNING",
+            "level": "INFO",
+            "propagate": False,
+        },
+        "django.request": {
+            "handlers": ["console"],
+            "level": "ERROR",
+            "propagate": False,
+        },
+        "django.db.backends": {
+            "handlers": ["console"],
+            "level": "WARNING",
             "propagate": False,
         },
         "doccoon": {
@@ -351,6 +370,16 @@ LOGGING = {
             "propagate": False,
         },
         "doccoon.requests": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "gunicorn.error": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "gunicorn.access": {
             "handlers": ["console"],
             "level": "INFO",
             "propagate": False,
